@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Wawancara – Sistem Verifikasi Debitur</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --c-primary: #185FA5; --c-primary-light: #E6F1FB; --c-primary-mid: #378ADD;
+    --c-success: #1D9E75; --c-success-light: #E1F5EE;
+    --c-danger: #E24B4A; --c-danger-light: #FCEBEB;
+    --c-warning: #BA7517; --c-warning-light: #FAEEDA;
+    --c-gray-100: #D3D1C7; --c-gray-200: #B4B2A9; --c-gray-500: #5F5E5A; --c-gray-800: #444441;
+    --c-bg: #ffffff; --c-bg-secondary: #F7F8FA; --c-bg-tertiary: #EEF0F3;
+    --c-text: #1a1a1a; --c-text-muted: #5F5E5A; --c-border: rgba(0,0,0,0.12);
+    --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px;
+    --shadow-card: 0 1px 3px rgba(0,0,0,0.07), 0 4px 16px rgba(0,0,0,0.05);
+  }
+
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--c-bg-tertiary); color: var(--c-text); min-height: 100vh; font-size: 15px; line-height: 1.6; }
+
+  .app-header { background: var(--c-bg); border-bottom: 0.5px solid var(--c-border); padding: 14px 24px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 100; }
+  .app-header .logo-icon { width: 36px; height: 36px; background: var(--c-primary); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: 700; }
+  .app-header h1 { font-size: 16px; font-weight: 600; }
+  .app-header p { font-size: 12px; color: var(--c-text-muted); margin-top: 1px; }
+
+  .stepper-bar { background: var(--c-bg); border-bottom: 0.5px solid var(--c-border); padding: 12px 24px; display: flex; gap: 0; overflow-x: auto; }
+  .step-item { display: flex; align-items: center; gap: 8px; white-space: nowrap; flex-shrink: 0; }
+  .step-item + .step-item::before { content: ''; display: block; width: 24px; height: 1px; background: var(--c-border); margin: 0 4px; }
+  .step-dot { width: 24px; height: 24px; border-radius: 50%; border: 1.5px solid var(--c-border); background: var(--c-bg); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--c-text-muted); flex-shrink: 0; }
+  .step-dot.active { background: var(--c-primary); border-color: var(--c-primary); color: white; }
+  .step-dot.done { background: var(--c-success); border-color: var(--c-success); color: white; }
+  .step-label { font-size: 12px; color: var(--c-text-muted); }
+  .step-label.active { color: var(--c-primary); font-weight: 500; }
+  .step-label.done { color: var(--c-success); }
+
+  .main-content { max-width: 860px; margin: 0 auto; padding: 20px 16px 28px; }
+
+  .card { background: var(--c-bg); border-radius: var(--radius-xl); border: 0.5px solid var(--c-border); box-shadow: var(--shadow-card); padding: 20px; margin-bottom: 16px; }
+
+  /* ── CAMERA VIEWFINDER ── */
+  .camera-wrap {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 4/3;
+    background: #0b0b0c;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin-bottom: 12px;
+  }
+  #cameraFeed {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* mirror for selfie feel */
+    display: block;
+  }
+  /* overlay question text on camera */
+  .cam-overlay-q {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: linear-gradient(transparent, rgba(0,0,0,0.82));
+    padding: 24px 14px 14px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+    display: none;
+  }
+  .cam-overlay-q.visible { display: block; }
+  .cam-overlay-q .cam-q-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 4px;
+  }
+
+  /* camera status row */
+  .cam-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    min-height: 26px;
+  }
+
+  /* REC badge */
+  .rec-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    background: var(--c-danger); color: white;
+    font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .rec-dot { width: 7px; height: 7px; background: white; border-radius: 50%; animation: blink 1s ease-in-out infinite; }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
+
+  /* duration counter */
+  .rec-duration {
+    font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
+    color: var(--c-text-muted); letter-spacing: 0.04em;
+  }
+
+  /* ── QUESTION PANEL ── */
+  .q-nav { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .q-pill { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--c-border); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; color: var(--c-text-muted); background: var(--c-bg); flex-shrink: 0; }
+  .q-pill.done-honest { background: var(--c-success-light); border-color: var(--c-success); color: var(--c-success); }
+  .q-pill.done-lie { background: var(--c-danger-light); border-color: var(--c-danger); color: var(--c-danger); }
+  .q-pill.active { background: var(--c-primary-light); border-color: var(--c-primary); color: var(--c-primary); }
+  .q-pill.pending { opacity: 0.45; }
+
+  .progress-track { height: 3px; background: var(--c-bg-tertiary); border-radius: 2px; overflow: hidden; margin-bottom: 16px; }
+  .progress-fill { height: 100%; background: var(--c-primary); border-radius: 2px; transition: width 0.4s ease; }
+
+  .q-counter { display: inline-flex; align-items: center; gap: 6px; background: var(--c-primary-light); color: var(--c-primary); font-size: 11px; font-weight: 600; padding: 3px 10px; border-radius: 20px; margin-bottom: 10px; letter-spacing: 0.03em; }
+  .q-text { font-size: 16px; font-weight: 600; line-height: 1.45; color: var(--c-text); margin-bottom: 12px; }
+
+  /* ── TIMER RING ── */
+  .timer-row { display: flex; align-items: center; justify-content: center; gap: 20px; margin: 4px 0 14px; }
+  .timer-ring { position: relative; width: 72px; height: 72px; flex-shrink: 0; }
+  .timer-ring svg { transform: rotate(-90deg); }
+  .timer-ring .bg-circle { fill: none; stroke: var(--c-bg-tertiary); stroke-width: 6; }
+  .timer-ring .progress-circle { fill: none; stroke: var(--c-primary); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 188; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear, stroke 0.3s; }
+  .timer-ring .progress-circle.urgent { stroke: var(--c-danger); }
+  .timer-inner { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 700; color: var(--c-text); }
+  .timer-inner.urgent { color: var(--c-danger); }
+  .timer-label { font-size: 11px; color: var(--c-text-muted); text-align: center; line-height: 1.4; }
+
+  /* ── BUTTONS ── */
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; padding: 10px 18px; border-radius: var(--radius-md); font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; border: none; transition: all 0.15s; text-decoration: none; }
+  .btn-primary { background: var(--c-primary); color: white; }
+  .btn-primary:hover { background: #0C447C; }
+  .btn-primary:disabled { background: var(--c-gray-200); cursor: not-allowed; }
+  .btn-danger { background: var(--c-danger); color: white; }
+  .btn-danger:hover { background: #A32D2D; }
+  .btn-danger:disabled { background: var(--c-gray-200); cursor: not-allowed; }
+  .btn-secondary { background: transparent; color: var(--c-text); border: 1px solid var(--c-border); }
+  .btn-secondary:hover { background: var(--c-bg-secondary); }
+  .btn-lg { padding: 12px 24px; font-size: 15px; border-radius: var(--radius-lg); }
+
+  .action-row { display: flex; gap: 10px; justify-content: center; }
+
+  /* ── PREPARE OVERLAY ── */
+  .prepare-overlay { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 28px 20px; gap: 10px; text-align: center; }
+  .prepare-num { font-size: 64px; font-weight: 700; color: var(--c-primary); line-height: 1; animation: pulse-num 1s ease-in-out; }
+  @keyframes pulse-num { 0% { opacity: 0; transform: scale(0.6); } 60% { opacity: 1; transform: scale(1.08); } 100% { transform: scale(1); } }
+  .prepare-label { font-size: 13px; color: var(--c-text-muted); }
+  .prepare-question { font-size: 14px; font-weight: 600; color: var(--c-text); max-width: 340px; line-height: 1.45; padding: 12px 14px; background: var(--c-bg-secondary); border-radius: var(--radius-md); border: 1px solid var(--c-border); margin-top: 4px; }
+
+  /* ── ANALYZING STATE ── */
+  .loading-panel { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 24px; gap: 14px; }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--c-bg-tertiary); border-top-color: var(--c-primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-panel p { font-size: 13px; color: var(--c-text-muted); text-align: center; max-width: 280px; }
+  .loading-panel h3 { font-size: 15px; font-weight: 600; color: var(--c-text); text-align: center; }
+
+  /* ── PERMISSION ERROR ── */
+  .perm-error { padding: 28px 20px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .perm-icon { font-size: 40px; }
+  .perm-error h3 { font-size: 16px; font-weight: 600; }
+  .perm-error p { font-size: 13px; color: var(--c-text-muted); max-width: 300px; line-height: 1.5; }
+  .alert { padding: 10px 14px; border-radius: var(--radius-md); font-size: 12px; line-height: 1.5; }
+  .alert-warning { background: var(--c-warning-light); color: #633806; border: 1px solid rgba(186,117,23,0.25); }
+  .alert-info { background: var(--c-primary-light); color: #0C447C; border: 1px solid rgba(24,95,165,0.2); }
+
+  /* ── HIDDEN ── */
+  .hidden { display: none !important; }
+
+  /* ── PHONE FRAME ── */
+  html, body { height: 100%; }
+  body { background: #e7e9ee; display: flex; align-items: flex-start; justify-content: center; padding: 28px 12px; }
+  .phone-frame { width: 100%; max-width: 412px; background: #0b0b0c; border-radius: 46px; padding: 12px; box-shadow: 0 30px 70px rgba(0,0,0,0.35), 0 8px 20px rgba(0,0,0,0.18); }
+  .phone-notch { position: absolute; top: 12px; left: 50%; transform: translateX(-50%); width: 120px; height: 22px; background: #0b0b0c; border-radius: 0 0 16px 16px; z-index: 200; }
+  .phone-screen { position: relative; background: var(--c-bg-tertiary); border-radius: 34px; overflow: hidden; height: 860px; }
+  .phone-scroll { height: 100%; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .phone-scroll::-webkit-scrollbar { width: 0; }
+  .phone-screen .app-header, .phone-screen .stepper-bar { border-radius: 0; }
+  .phone-screen .app-header { padding-top: 30px; }
+  .phone-screen .main-content { padding: 16px 14px 32px; max-width: 100%; }
+  @media (max-width: 460px) {
+    .phone-frame { border-radius: 0; padding: 0; box-shadow: none; max-width: 100%; }
+    .phone-screen { border-radius: 0; height: 100vh; }
+    .phone-notch { display: none; }
+    body { padding: 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="phone-frame">
+  <div class="phone-notch"></div>
+  <div class="phone-screen">
+    <div class="phone-scroll">
+
+<div class="app-header">
+  <div class="logo-icon">AI</div>
+  <div>
+    <h1>Sistem Verifikasi Debitur</h1>
+    <p>Universitas Indonesia · Deteksi Kebohongan Berbasis LLM</p>
+  </div>
+</div>
+
+<div class="stepper-bar">
+  <div class="step-item"><div class="step-dot done">✓</div><span class="step-label done">Biodata</span></div>
+  <div class="step-item"><div class="step-dot done">✓</div><span class="step-label done">Disclaimer</span></div>
+  <div class="step-item"><div class="step-dot done">✓</div><span class="step-label done">Analisis AI</span></div>
+  <div class="step-item"><div class="step-dot active">4</div><span class="step-label active">Wawancara</span></div>
+  <div class="step-item"><div class="step-dot">5</div><span class="step-label">Laporan</span></div>
+</div>
+
+<div class="main-content">
+
+  <!-- ══ CAMERA PERMISSION REQUEST ══ -->
+  <div id="screenPermission" class="card">
+    <div class="perm-error">
+      <div class="perm-icon">📷</div>
+      <h3>Izin Kamera & Mikrofon</h3>
+      <p>Sesi wawancara ini memerlukan akses kamera dan mikrofon untuk merekam jawaban Anda.</p>
+      <div class="alert alert-warning" style="width:100%;">
+        ⚠ Pastikan Anda mengizinkan akses kamera dan mikrofon saat browser meminta izin.
+      </div>
+      <button class="btn btn-primary btn-lg" style="width:100%;" onclick="requestPermission()">
+        🎥 Izinkan Kamera & Mikrofon
+      </button>
+      <div id="permError" class="hidden" style="color:var(--c-danger); font-size:13px; text-align:center;"></div>
+    </div>
+  </div>
+
+  <!-- ══ MAIN INTERVIEW CARD ══ -->
+  <div id="screenInterview" class="hidden">
+
+    <!-- Camera viewfinder -->
+    <div class="card" style="padding:12px;">
+      <div class="camera-wrap">
+        <video id="cameraFeed" autoplay playsinline muted></video>
+        <!-- Question overlay on top of camera feed -->
+        <div class="cam-overlay-q" id="camOverlayQ">
+          <div class="cam-q-label">Pertanyaan yang sedang dijawab</div>
+          <div id="camOverlayText"></div>
+        </div>
+      </div>
+      <!-- Status row: REC badge + duration -->
+      <div class="cam-status-row">
+        <div id="recBadge" class="rec-badge hidden">
+          <div class="rec-dot"></div> REC
+        </div>
+        <div id="recDuration" class="rec-duration hidden">00:00</div>
+        <div id="camReadyMsg" style="font-size:12px; color:var(--c-text-muted);">Kamera aktif</div>
+      </div>
+    </div>
+
+    <!-- Interview flow card -->
+    <div class="card" id="interviewCard">
+
+      <!-- Question navigation pills -->
+      <div class="q-nav" id="qNav"></div>
+      <div class="progress-track">
+        <div class="progress-fill" id="qProgress" style="width:0%"></div>
+      </div>
+
+      <!-- ── PREPARE PHASE ── -->
+      <div id="phasePrep" class="hidden">
+        <div class="prepare-overlay">
+          <div class="prepare-label">Pertanyaan berikutnya dimulai dalam</div>
+          <div class="prepare-num" id="prepareNum">5</div>
+          <div class="prepare-label" style="color:var(--c-primary); font-weight:500;">Baca dan siapkan jawaban Anda</div>
+          <div class="prepare-question" id="previewQ"></div>
+        </div>
+      </div>
+
+      <!-- ── ANSWERING PHASE ── -->
+      <div id="phaseAnswer" class="hidden">
+        <div class="q-counter" id="qCounter">Pertanyaan 1 dari ?</div>
+        <div class="q-text" id="qText"></div>
+        <div class="timer-row">
+          <div class="timer-ring">
+            <svg width="72" height="72" viewBox="0 0 72 72">
+              <circle class="bg-circle" cx="36" cy="36" r="30"/>
+              <circle class="progress-circle" id="timerCircle" cx="36" cy="36" r="30"/>
+            </svg>
+            <div class="timer-inner" id="timerNum">20</div>
+          </div>
+          <div class="timer-label">detik<br>tersisa</div>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-danger btn-lg" id="btnStop" onclick="stopAnswer()">
+            ⏹ Selesai Menjawab
+          </button>
+        </div>
+      </div>
+
+      <!-- ── ANALYZING PHASE ── -->
+      <div id="phaseAnalyze" class="hidden">
+        <div class="loading-panel">
+          <div class="spinner"></div>
+          <h3 id="analyzeTitle">Menyimpan rekaman...</h3>
+          <p id="analyzeMsg">Video jawaban sedang diproses.</p>
+        </div>
+      </div>
+
+    </div><!-- /interviewCard -->
+
+    <div class="alert alert-info" style="font-size:12px;">
+      💡 Setiap jawaban langsung dikirim ke model deteksi kebohongan (audio+video) di server untuk dianalisis.
+    </div>
+
+  </div><!-- /screenInterview -->
+
+  <!-- ══ CAMERA PERMISSION ERROR (fallback) ══ -->
+  <div id="screenError" class="card hidden">
+    <div class="perm-error">
+      <div class="perm-icon">🚫</div>
+      <h3>Akses Kamera Ditolak</h3>
+      <p>Browser tidak dapat mengakses kamera atau mikrofon. Periksa pengaturan izin di browser Anda, lalu muat ulang halaman.</p>
+      <button class="btn btn-secondary" onclick="window.location.reload()">↻ Muat Ulang</button>
+      <button class="btn btn-secondary" onclick="window.location.href='02-disclaimer.html'">← Kembali</button>
+    </div>
+  </div>
+
+</div><!-- /main-content -->
+
+    </div>
+  </div>
+</div>
+
+<script>
+// ════════════════════════════════════════════════════════════════════════════
+//  KONFIGURASI
+// ════════════════════════════════════════════════════════════════════════════
+// Ganti URL ini sesuai lokasi app.py Anda berjalan.
+// Jika dijalankan lokal: 'http://localhost:8000'
+// Jika di server: 'http://IP_SERVER:8000'
+const API_BASE = 'http://localhost:8000';
+
+// ─── API KEY (akses terbatas — hanya untuk pemakaian pribadi) ────────────────
+// Server menolak request tanpa header X-API-Key yang benar (lihat app.py).
+// Key sudah diminta & disimpan di halaman 03-analisis-ai.html; di sini kita
+// cukup membacanya kembali (kalau belum ada, baru tanya lagi).
+function getApiKey() {
+  let key = localStorage.getItem('sv_api_key');
+  if (!key) {
+    key = window.prompt('Masukkan API key untuk mengakses server model:');
+    if (key) localStorage.setItem('sv_api_key', key.trim());
+  }
+  return (key || '').trim();
+}
+
+function apiHeaders(extra) {
+  return Object.assign({ 'X-API-Key': getApiKey() }, extra || {});
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════════════════════════════════
+const state = {
+  biodata:   JSON.parse(localStorage.getItem('sv_biodata')   || 'null'),
+  analysis:  localStorage.getItem('sv_analysis')              || '',
+  questions: JSON.parse(localStorage.getItem('sv_questions') || '[]'),
+
+  currentQ:  0,
+  results:   [],          // { q, verdict, alasan, latencyMs, timedOut, videoBlob, videoUrl, durationMs }
+
+  // MediaStream & recording
+  stream:         null,   // getUserMedia stream (video+audio)
+  mediaRecorder:  null,
+  recordedChunks: [],
+
+  // Timing
+  recordStartTime: null,  // Date.now() when REC started
+  recordDurationInterval: null,
+  timerInterval:   null,
+  prepareInterval: null,
+  timeLeft: 20,
+};
+
+// Guard: must have questions
+if (!state.biodata || state.questions.length === 0) {
+  window.location.href = '02-disclaimer.html';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PERMISSION & CAMERA INIT
+// ════════════════════════════════════════════════════════════════════════════
+async function requestPermission() {
+  document.getElementById('permError').classList.add('hidden');
+  try {
+    // Request video + audio
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+      audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 44100 },
+    });
+
+    state.stream = stream;
+
+    // Attach stream to <video>
+    const videoEl = document.getElementById('cameraFeed');
+    videoEl.srcObject = stream;
+    await videoEl.play();
+
+    // Switch screens
+    document.getElementById('screenPermission').classList.add('hidden');
+    document.getElementById('screenInterview').classList.remove('hidden');
+
+    // Start interview
+    buildQNav();
+    showQuestion(0);
+
+  } catch (err) {
+    console.error('getUserMedia error:', err);
+    let msg = 'Gagal mengakses kamera/mikrofon.';
+    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+      msg = 'Izin ditolak. Klik ikon kunci di address bar browser dan izinkan akses kamera & mikrofon.';
+      document.getElementById('screenPermission').classList.add('hidden');
+      document.getElementById('screenError').classList.remove('hidden');
+    } else if (err.name === 'NotFoundError') {
+      msg = 'Kamera atau mikrofon tidak ditemukan pada perangkat ini.';
+    } else if (err.name === 'NotReadableError') {
+      msg = 'Kamera sedang digunakan oleh aplikasi lain.';
+    }
+    document.getElementById('permError').textContent = msg;
+    document.getElementById('permError').classList.remove('hidden');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  QUESTION NAV
+// ════════════════════════════════════════════════════════════════════════════
+function buildQNav() {
+  const nav = document.getElementById('qNav');
+  nav.innerHTML = '';
+  state.questions.forEach((_, i) => {
+    const pill = document.createElement('div');
+    pill.className = 'q-pill pending';
+    pill.id = 'qpill' + i;
+    pill.textContent = i + 1;
+    nav.appendChild(pill);
+  });
+}
+
+function updateQNav() {
+  state.results.forEach((r, i) => {
+    const pill = document.getElementById('qpill' + i);
+    if (!pill) return;
+    pill.className = 'q-pill ' + (r.verdict === 'BOHONG' ? 'done-lie' : 'done-honest');
+  });
+  const cur = document.getElementById('qpill' + state.currentQ);
+  if (cur) { cur.className = 'q-pill active'; }
+}
+
+function updateProgress(idx) {
+  const pct = (idx / state.questions.length) * 100;
+  document.getElementById('qProgress').style.width = pct + '%';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PHASES: PREPARE → ANSWER → ANALYZE
+// ════════════════════════════════════════════════════════════════════════════
+function showPhase(name) {
+  ['phasePrep', 'phaseAnswer', 'phaseAnalyze'].forEach(id => {
+    document.getElementById(id).classList.toggle('hidden', id !== name);
+  });
+}
+
+// ── PHASE 1: PREPARE (5-second countdown, question visible on screen + camera overlay) ──
+function showQuestion(idx) {
+  if (idx >= state.questions.length) { finishInterview(); return; }
+
+  state.currentQ = idx;
+  clearInterval(state.prepareInterval);
+  clearInterval(state.timerInterval);
+
+  updateProgress(idx);
+  updateQNav();
+
+  const q = state.questions[idx];
+
+  // Show question in prepare overlay
+  document.getElementById('previewQ').textContent = q;
+
+  // Also show on camera overlay so it's captured in the recording
+  document.getElementById('camOverlayText').textContent = q;
+  document.getElementById('camOverlayQ').classList.remove('visible'); // not yet — show when answering
+
+  showPhase('phasePrep');
+  hideCamStatus();
+
+  let count = 5;
+  document.getElementById('prepareNum').textContent = count;
+
+  state.prepareInterval = setInterval(() => {
+    count--;
+    if (count <= 0) {
+      clearInterval(state.prepareInterval);
+      beginAnswering(idx);
+    } else {
+      // Re-animate number
+      const el = document.getElementById('prepareNum');
+      el.style.animation = 'none';
+      void el.offsetWidth;
+      el.style.animation = 'pulse-num 1s ease-in-out';
+      el.textContent = count;
+    }
+  }, 1000);
+}
+
+// ── PHASE 2: ANSWERING — start recording, show timer ──
+function beginAnswering(idx) {
+  showPhase('phaseAnswer');
+
+  const total = state.questions.length;
+  const q = state.questions[idx];
+
+  document.getElementById('qCounter').textContent = `Pertanyaan ${idx + 1} dari ${total}`;
+  document.getElementById('qText').textContent = q;
+  document.getElementById('btnStop').disabled = false;
+
+  // Show question on camera overlay
+  document.getElementById('camOverlayText').textContent = q;
+  document.getElementById('camOverlayQ').classList.add('visible');
+
+  startMediaRecording();
+  startTimer(idx);
+}
+
+// ── PHASE 3: ANALYZE — stop recording, save blob, proceed ──
+function stopAnswer() {
+  clearInterval(state.timerInterval);
+  document.getElementById('btnStop').disabled = true;
+  stopMediaRecording(); // will call onRecordingReady() when done
+}
+
+function autoStopAnswer(idx) {
+  stopAnswer();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  TIMER
+// ════════════════════════════════════════════════════════════════════════════
+function startTimer(idx) {
+  state.timeLeft = 20;
+  const circle    = document.getElementById('timerCircle');
+  const timerNum  = document.getElementById('timerNum');
+  const circ      = 188; // 2π × r=30
+
+  function tick() {
+    const ratio = state.timeLeft / 20;
+    circle.style.strokeDashoffset = circ * (1 - ratio);
+    timerNum.textContent = state.timeLeft;
+
+    const urgent = state.timeLeft <= 5;
+    circle.classList.toggle('urgent', urgent);
+    timerNum.classList.toggle('urgent', urgent);
+
+    if (state.timeLeft <= 0) {
+      clearInterval(state.timerInterval);
+      autoStopAnswer(idx);
+    } else {
+      state.timeLeft--;
+    }
+  }
+  tick();
+  state.timerInterval = setInterval(tick, 1000);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  MEDIA RECORDER — real video + audio capture per question
+// ════════════════════════════════════════════════════════════════════════════
+function getBestMimeType() {
+  const candidates = [
+    'video/webm;codecs=vp9,opus',
+    'video/webm;codecs=vp8,opus',
+    'video/webm',
+    'video/mp4',
+  ];
+  return candidates.find(t => MediaRecorder.isTypeSupported(t)) || '';
+}
+
+function startMediaRecording() {
+  if (!state.stream) return;
+
+  state.recordedChunks = [];
+  state.recordStartTime = Date.now();
+
+  const mimeType = getBestMimeType();
+  const options  = mimeType ? { mimeType, audioBitsPerSecond: 128000, videoBitsPerSecond: 1500000 } : {};
+
+  try {
+    state.mediaRecorder = new MediaRecorder(state.stream, options);
+  } catch(e) {
+    // Fallback without options
+    state.mediaRecorder = new MediaRecorder(state.stream);
+  }
+
+  state.mediaRecorder.ondataavailable = (e) => {
+    if (e.data && e.data.size > 0) state.recordedChunks.push(e.data);
+  };
+
+  state.mediaRecorder.onstop = onRecordingReady;
+
+  // Collect data every 250ms (good for streaming later, and avoids losing data)
+  state.mediaRecorder.start(250);
+
+  // Show REC UI
+  showCamRec();
+  startDurationCounter();
+}
+
+function stopMediaRecording() {
+  showPhase('phaseAnalyze');
+  document.getElementById('camOverlayQ').classList.remove('visible');
+  hideCamStatus();
+  clearInterval(state.recordDurationInterval);
+
+  if (state.mediaRecorder && state.mediaRecorder.state !== 'inactive') {
+    state.mediaRecorder.stop(); // triggers onstop → onRecordingReady
+  } else {
+    onRecordingReady(); // no recorder fallback
+  }
+}
+
+async function onRecordingReady() {
+  const durationMs = Date.now() - (state.recordStartTime || Date.now());
+  const timedOut   = state.timeLeft <= 0;
+
+  // Build Blob from recorded chunks
+  const mimeType  = state.mediaRecorder?.mimeType || 'video/webm';
+  const videoBlob = state.recordedChunks.length > 0
+    ? new Blob(state.recordedChunks, { type: mimeType })
+    : null;
+
+  // Create object URL for download/playback (kept in session memory)
+  const videoUrl = videoBlob ? URL.createObjectURL(videoBlob) : null;
+
+  const q = state.questions[state.currentQ];
+  const idx = state.currentQ;
+
+  const result = {
+    questionIndex: idx,
+    q,
+    verdict:    'PENDING',   // diisi setelah panggilan ke /detect-deception
+    alasan:     '',
+    probabilityDeceptive: null,
+    probabilityTruthful:  null,
+    latencyMs:  durationMs,
+    timedOut,
+    durationMs,
+    // ↓ Artefak yang dibutuhkan model deteksi kebohongan:
+    videoBlob,               // Blob — dikirim via FormData ke /detect-deception
+    videoUrl,                // Object URL — untuk playback/debug lokal
+    mimeType,
+    fileSizeBytes: videoBlob?.size || 0,
+  };
+  state.results.push(result);
+
+  // ── Kirim video jawaban ke endpoint /detect-deception (app.py) ──
+  document.getElementById('analyzeTitle').textContent = 'Menganalisis jawaban...';
+  document.getElementById('analyzeMsg').textContent = 'Video dikirim ke model deteksi kebohongan, mohon tunggu.';
+
+  await analyzeAnswer(result);
+
+  updateQNav();
+  proceedToNext();
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  PANGGIL /detect-deception UNTUK SATU JAWABAN
+// ════════════════════════════════════════════════════════════════════════════
+async function analyzeAnswer(result) {
+  if (!result.videoBlob) {
+    result.verdict = 'TIDAK_TERDETEKSI';
+    result.alasan  = 'Tidak ada rekaman video untuk dianalisis.';
+    return;
+  }
+
+  const ext  = (result.mimeType || '').includes('mp4') ? 'mp4' : 'webm';
+  const form = new FormData();
+  form.append('video', result.videoBlob, `q${result.questionIndex + 1}.${ext}`);
+
+  try {
+    const resp = await fetch(`${API_BASE}/detect-deception`, {
+      method: 'POST',
+      headers: apiHeaders(), // hanya X-API-Key; jangan set Content-Type manual untuk FormData
+      body: form,
+      signal: AbortSignal.timeout(60000), // 1 menit timeout per video
+    });
+
+    if (resp.status === 401) {
+      localStorage.removeItem('sv_api_key');
+      result.verdict = 'TIDAK_TERDETEKSI';
+      result.alasan  = 'API key salah/tidak ada. Muat ulang halaman untuk memasukkan key yang benar.';
+      return;
+    }
+
+    if (resp.status === 503) {
+      result.verdict = 'TIDAK_TERDETEKSI';
+      result.alasan  = 'Model deteksi kebohongan belum siap di server (artifact belum dimuat).';
+      return;
+    }
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      result.verdict = 'TIDAK_TERDETEKSI';
+      result.alasan  = `Server mengembalikan error ${resp.status}: ${errText}`;
+      return;
+    }
+
+    const data = await resp.json();
+    // data: { label: 'Deceptive' | 'Truthful', probability_deceptive, probability_truthful }
+    const pctDeceptive = Math.round((data.probability_deceptive || 0) * 100);
+    const pctTruthful  = Math.round((data.probability_truthful  || 0) * 100);
+
+    result.probabilityDeceptive = data.probability_deceptive;
+    result.probabilityTruthful  = data.probability_truthful;
+
+    if (data.label === 'Deceptive') {
+      result.verdict = 'BOHONG';
+      result.alasan  = `Model mendeteksi indikasi ketidakjujuran (keyakinan ${pctDeceptive}%) dari pola audio & video saat menjawab.`;
+    } else {
+      result.verdict = 'JUJUR';
+      result.alasan  = `Model menilai jawaban konsisten dan jujur (keyakinan ${pctTruthful}%) berdasarkan pola audio & video.`;
+    }
+  } catch (e) {
+    result.verdict = 'TIDAK_TERDETEKSI';
+    if (e.name === 'TimeoutError') {
+      result.alasan = 'Waktu habis saat menghubungi model deteksi kebohongan (timeout 60 detik).';
+    } else {
+      result.alasan = `Gagal menghubungi server deteksi kebohongan: ${e.message}`;
+    }
+  }
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  FLOW: next question or finish
+// ════════════════════════════════════════════════════════════════════════════
+function proceedToNext() {
+  const nextIdx = state.currentQ + 1;
+  if (nextIdx >= state.questions.length) {
+    finishInterview();
+  } else {
+    showQuestion(nextIdx);
+  }
+}
+
+async function finishInterview() {
+  // Stop the camera stream
+  if (state.stream) {
+    state.stream.getTracks().forEach(t => t.stop());
+  }
+
+  // Serialize results to localStorage (without Blobs — they can't be serialized)
+  // Store only metadata; videoBlob/videoUrl live in memory during this session.
+  const serializableResults = state.results.map(r => ({
+    questionIndex:         r.questionIndex,
+    q:                     r.q,
+    verdict:               r.verdict,
+    alasan:                r.alasan,
+    probabilityDeceptive:  r.probabilityDeceptive,
+    probabilityTruthful:   r.probabilityTruthful,
+    latencyMs:             r.latencyMs,
+    timedOut:              r.timedOut,
+    durationMs:            r.durationMs,
+    mimeType:              r.mimeType,
+    fileSizeBytes:         r.fileSizeBytes,
+    videoUrl:              r.videoUrl,   // Object URL survives within same tab session
+  }));
+
+  localStorage.setItem('sv_results',      JSON.stringify(serializableResults));
+  localStorage.setItem('sv_video_blobs',  'session'); // signal: blobs live in state.results
+
+  // Catatan: setiap jawaban sudah dikirim ke /detect-deception saat direkam
+  // (lihat analyzeAnswer()), jadi di sini tidak perlu memanggil API lagi.
+
+  window.location.href = '05-laporan.html';
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CAMERA STATUS UI
+// ════════════════════════════════════════════════════════════════════════════
+let durationSecs = 0;
+
+function showCamRec() {
+  document.getElementById('recBadge').classList.remove('hidden');
+  document.getElementById('recDuration').classList.remove('hidden');
+  document.getElementById('camReadyMsg').classList.add('hidden');
+  durationSecs = 0;
+  document.getElementById('recDuration').textContent = '00:00';
+}
+
+function hideCamStatus() {
+  document.getElementById('recBadge').classList.add('hidden');
+  document.getElementById('recDuration').classList.add('hidden');
+  document.getElementById('camReadyMsg').classList.remove('hidden');
+}
+
+function startDurationCounter() {
+  clearInterval(state.recordDurationInterval);
+  durationSecs = 0;
+  state.recordDurationInterval = setInterval(() => {
+    durationSecs++;
+    const m = String(Math.floor(durationSecs / 60)).padStart(2, '0');
+    const s = String(durationSecs % 60).padStart(2, '0');
+    const el = document.getElementById('recDuration');
+    if (el) el.textContent = `${m}:${s}`;
+  }, 1000);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  INIT
+// ════════════════════════════════════════════════════════════════════════════
+// Check browser support
+if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+  document.getElementById('screenPermission').classList.add('hidden');
+  document.getElementById('screenError').classList.remove('hidden');
+  document.querySelector('.perm-error h3').textContent = 'Browser Tidak Didukung';
+  document.querySelector('.perm-error p').textContent = 'Browser Anda tidak mendukung akses kamera. Gunakan Chrome, Firefox, atau Safari versi terbaru.';
+}
+</script>
+</body>
+</html>
