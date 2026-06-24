@@ -778,7 +778,6 @@ body {
 
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('detail', this)">Detail Pertanyaan</button>
-      <button class="tab-btn" onclick="switchTab('analysis', this)">Analisis AI</button>
       <button class="tab-btn" onclick="switchTab('profile', this)">Profil Debitur</button>
     </div>
 
@@ -794,13 +793,6 @@ body {
         </thead>
         <tbody id="resultTableBody"></tbody>
       </table>
-    </div>
-
-    <div class="tab-pane" id="tab-analysis">
-      <div class="alert alert-info" style="margin-bottom:16px;">
-        Berikut adalah hasil analisis mendalam yang dilakukan sistem AI terhadap profil calon debitur sebelum sesi wawancara.
-      </div>
-      <div style="font-size:14px; line-height:1.8; color:var(--c-text);" id="fullAnalysisText"></div>
     </div>
 
     <div class="tab-pane" id="tab-profile">
@@ -820,7 +812,6 @@ body {
 
 <script>
 const biodata = JSON.parse(localStorage.getItem('sv_biodata') || 'null');
-const analysis = localStorage.getItem('sv_analysis') || '';
 const results = JSON.parse(localStorage.getItem('sv_results') || '[]');
 
 if (!biodata || results.length === 0) {
@@ -847,12 +838,10 @@ function restartApp() {
 }
 
 function generateReport() {
-  const total      = results.length;
-  const lies       = results.filter(r => r.verdict === 'BOHONG').length;
-  const honest     = results.filter(r => r.verdict === 'JUJUR').length;
-  const unknown    = total - lies - honest;
-  const detected   = lies + honest; // jawaban yang berhasil dianalisis model
-  const pct = detected > 0 ? Math.round((lies / detected) * 100) : 0;
+  const total = results.length;
+  const lies = results.filter(r => r.verdict === 'BOHONG').length;
+  const honest = total - lies;
+  const pct = total > 0 ? Math.round((lies / total) * 100) : 0;
 
   let level = 'low-risk', levelText = 'Risiko Rendah', levelEmoji = '✅';
   if (pct >= 60) { level = 'high-risk'; levelText = 'Risiko Tinggi'; levelEmoji = '🚫'; }
@@ -868,8 +857,7 @@ function generateReport() {
       </div>
     </div>
     <div style="font-size:13px; line-height:1.6;">
-      ${lies} dari ${detected} respons yang berhasil dianalisis terdeteksi memiliki indikasi ketidakjujuran berdasarkan model deteksi kebohongan (audio & video).
-      ${unknown > 0 ? ` ${unknown} respons tidak dapat dianalisis (lihat detail).` : ''}
+      ${lies} dari ${total} respons terdeteksi memiliki indikasi ketidakjujuran berdasarkan analisis latensi respons dan konteks biodata debitur.
       ${pct >= 60 ? ' <strong>Direkomendasikan untuk ditolak atau dilakukan verifikasi lanjutan.</strong>' : pct >= 30 ? ' Perlu dilakukan verifikasi tambahan sebelum keputusan kredit.' : ' Profil debitur tampak konsisten dan dapat dipertimbangkan lebih lanjut.'}
     </div>`;
 
@@ -886,24 +874,19 @@ function generateReport() {
   const tbody = document.getElementById('resultTableBody');
   tbody.innerHTML = '';
   results.forEach((r, i) => {
-    const badgeClass = r.verdict === 'JUJUR' ? 'honest' : r.verdict === 'BOHONG' ? 'lie' : 'unknown';
-    const badgeIcon  = r.verdict === 'JUJUR' ? '✓' : r.verdict === 'BOHONG' ? '✗' : '?';
-    const badgeText  = r.verdict === 'JUJUR' ? 'JUJUR' : r.verdict === 'BOHONG' ? 'BOHONG' : 'TIDAK TERDETEKSI';
     const tr = document.createElement('tr');
     tr.innerHTML = `
       <td style="font-weight:600; color:var(--c-text-muted);">${i + 1}</td>
       <td style="font-size:13px;">${r.q}</td>
       <td>
-        <span class="badge badge-${badgeClass}">
-          ${badgeIcon} ${badgeText}
+        <span class="badge badge-${r.verdict === 'JUJUR' ? 'honest' : 'lie'}">
+          ${r.verdict === 'JUJUR' ? '✓' : '✗'} ${r.verdict}
         </span>
         <div style="font-size:11px; color:var(--c-text-muted); margin-top:4px;">${r.timedOut ? 'Timeout' : Math.round(r.latencyMs / 1000) + 's latency'}</div>
       </td>
       <td style="font-size:12px; color:var(--c-text-muted);">${r.alasan}</td>`;
     tbody.appendChild(tr);
   });
-
-  document.getElementById('fullAnalysisText').innerHTML = analysis.replace(/\n/g, '<br>');
 
   const b = biodata;
   document.getElementById('profileSummary').innerHTML = `
