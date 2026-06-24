@@ -822,11 +822,34 @@ body {
       </div>
       <div class="form-field">
         <label>Bidang Industri <span class="req">*</span></label>
-        <input type="text" id="f_industri" placeholder="Contoh: Perbankan, Teknologi" />
+        <select id="f_industri">
+          <option value="">— Pilih bidang industri —</option>
+          <option>Perdagangan</option>
+          <option>Jasa</option>
+          <option>Manufaktur</option>
+          <option>Pertanian</option>
+          <option>Transportasi/Logistik</option>
+          <option>Konstruksi</option>
+          <option>F&amp;B</option>
+          <option>Pendidikan</option>
+          <option>Kesehatan</option>
+          <option value="__other__">Lainnya...</option>
+        </select>
+        <input type="text" id="f_industri_other" class="hidden" placeholder="Tuliskan bidang industri lainnya" style="margin-top:6px;" />
       </div>
       <div class="form-field">
         <label>Jabatan <span class="req">*</span></label>
-        <input type="text" id="f_jabatan" placeholder="Contoh: Staff, Supervisor, Manager" />
+        <select id="f_jabatan">
+          <option value="">— Pilih jabatan —</option>
+          <option>Staf</option>
+          <option>Supervisor</option>
+          <option>Manajer</option>
+          <option>Pemilik Usaha</option>
+          <option>Pekerja Lepas</option>
+          <option>Buruh Harian</option>
+          <option value="__other__">Lainnya...</option>
+        </select>
+        <input type="text" id="f_jabatan_other" class="hidden" placeholder="Tuliskan jabatan lainnya" style="margin-top:6px;" />
       </div>
       <div class="form-field">
         <label>Lama Bekerja <span class="req">*</span></label>
@@ -864,7 +887,59 @@ body {
     <div class="form-grid">
       <div class="form-field" style="grid-column: 1/-1;">
         <label>Alasan Meminjam <span class="req">*</span></label>
-        <input type="text" id="f_alasan" placeholder="Contoh: Kebutuhan rumah tangga, Modal usaha, Biaya pendidikan" />
+        <select id="f_alasan">
+          <option value="">— Pilih alasan meminjam —</option>
+          <optgroup label="Kebutuhan Pokok">
+            <option>Kebutuhan pokok tidak terduga</option>
+            <option>Bayar tunggakan listrik/air</option>
+            <option>Beli susu dan popok anak</option>
+            <option>Renovasi rumah/perbaikan atap bocor</option>
+            <option>Biaya sewa rumah/kontrakan</option>
+            <option>Kebutuhan dapur sehari-hari</option>
+            <option>Perbaikan pompa air rusak</option>
+          </optgroup>
+          <optgroup label="Konsumtif">
+            <option>Beli HP/Gadget baru</option>
+            <option>Tiket konser/event</option>
+            <option>Liburan/Healing</option>
+            <option>Bayar tagihan pinjol/paylater lain (Gali lubang tutup lubang)</option>
+            <option>Modifikasi motor</option>
+            <option>Beli pakaian/sepatu branded</option>
+            <option>Kebutuhan gaya hidup/nongkrong</option>
+            <option>Upgrade PC/Laptop gaming</option>
+            <option>Beli perhiasan/aksesoris</option>
+          </optgroup>
+          <optgroup label="Modal Usaha">
+            <option>Tambah stok barang dagangan</option>
+            <option>Modal awal jualan online</option>
+            <option>Perbaikan gerobak/tempat usaha</option>
+            <option>Sewa ruko/lapak</option>
+            <option>Beli etalase/peralatan toko</option>
+          </optgroup>
+          <optgroup label="Kesehatan">
+            <option>Biaya pengobatan/rumah sakit</option>
+            <option>Tebus resep obat</option>
+            <option>Biaya persalinan</option>
+            <option>Biaya dokter gigi</option>
+            <option>Rawat inap anggota keluarga</option>
+          </optgroup>
+          <optgroup label="Pendidikan">
+            <option>Bayar SPP/Uang semester</option>
+            <option>Beli laptop/perlengkapan sekolah</option>
+            <option>Biaya daftar ulang</option>
+            <option>Bayar les/bimbingan belajar</option>
+            <option>Beli buku cetak/seragam</option>
+          </optgroup>
+          <optgroup label="Kendaraan">
+            <option>Service rutin kendaraan</option>
+            <option>Perbaikan kendaraan turun mesin</option>
+            <option>Perpanjang STNK/Bayar Pajak</option>
+            <option>Ganti ban motor/mobil</option>
+            <option>Biaya perbaikan habis kecelakaan</option>
+          </optgroup>
+          <option value="__other__">Lainnya...</option>
+        </select>
+        <input type="text" id="f_alasan_other" class="hidden" placeholder="Tuliskan alasan meminjam lainnya" style="margin-top:6px;" />
       </div>
       <div class="form-field">
         <label>Nominal Pinjaman (Rp) <span class="req">*</span></label>
@@ -939,6 +1014,35 @@ body {
 </div>
 
 <script>
+// ─── FIELD DENGAN OPSI "LAINNYA" (industri, jabatan, alasan) ────────────────
+const OTHER_VALUE = '__other__';
+const OTHER_FIELD_KEYS = ['industri', 'jabatan', 'alasan'];
+
+function setupOtherField(key) {
+  const select = document.getElementById('f_' + key);
+  const otherInput = document.getElementById('f_' + key + '_other');
+  if (!select || !otherInput) return;
+  select.addEventListener('change', () => {
+    const isOther = select.value === OTHER_VALUE;
+    otherInput.classList.toggle('hidden', !isOther);
+    if (isOther) {
+      otherInput.focus();
+    } else {
+      otherInput.value = '';
+    }
+  });
+}
+OTHER_FIELD_KEYS.forEach(setupOtherField);
+
+// Ambil nilai akhir field select+lainnya: pakai isian manual jika "Lainnya" dipilih
+function getOtherFieldValue(key) {
+  const select = document.getElementById('f_' + key);
+  if (select.value === OTHER_VALUE) {
+    return document.getElementById('f_' + key + '_other').value.trim();
+  }
+  return select.value;
+}
+
 // ─── TENOR → BUNGA AUTO-CALC ────────────────────────────────────────────────
 document.getElementById('f_tenor').addEventListener('change', function () {
   const t = parseInt(this.value);
@@ -962,12 +1066,12 @@ function collectBiodata() {
     kendaraan: document.getElementById('f_kendaraan').value,
     perusahaan: document.getElementById('f_perusahaan').value.trim(),
     jenis_pekerjaan: document.getElementById('f_jenis_pekerjaan').value.trim(),
-    industri: document.getElementById('f_industri').value.trim(),
-    jabatan: document.getElementById('f_jabatan').value.trim(),
+    industri: getOtherFieldValue('industri'),
+    jabatan: getOtherFieldValue('jabatan'),
     lama_bekerja: document.getElementById('f_lama_bekerja').value,
     pendapatan_bersih: document.getElementById('f_pendapatan_bersih').value,
     pendapatan_keluarga: document.getElementById('f_pendapatan_keluarga').value,
-    alasan: document.getElementById('f_alasan').value.trim(),
+    alasan: getOtherFieldValue('alasan'),
     nominal: document.getElementById('f_nominal').value,
     tenor: document.getElementById('f_tenor').value,
     bunga: document.getElementById('f_bunga').value,
@@ -1007,6 +1111,23 @@ function goToDisclaimer() {
     const saved = JSON.parse(localStorage.getItem('sv_biodata') || 'null');
     if (!saved) return;
     Object.entries(saved).forEach(([key, val]) => {
+      if (OTHER_FIELD_KEYS.includes(key)) {
+        const select = document.getElementById('f_' + key);
+        const otherInput = document.getElementById('f_' + key + '_other');
+        if (!select) return;
+        // Cek apakah val cocok dengan salah satu opsi baku; jika tidak, anggap "Lainnya"
+        const matched = Array.from(select.options).some(o => o.value === val && o.value !== OTHER_VALUE);
+        if (matched) {
+          select.value = val;
+        } else if (val) {
+          select.value = OTHER_VALUE;
+          if (otherInput) {
+            otherInput.classList.remove('hidden');
+            otherInput.value = val;
+          }
+        }
+        return;
+      }
       const el = document.getElementById('f_' + key);
       if (el) el.value = val;
     });
