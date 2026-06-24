@@ -682,7 +682,7 @@ async function analyzeAnswer(result) {
       method: 'POST',
       headers: apiHeaders(), // hanya X-API-Key; jangan set Content-Type manual untuk FormData
       body: form,
-      signal: AbortSignal.timeout(60000), // 1 menit timeout per video
+      signal: AbortSignal.timeout(1200000), // 1 menit timeout per video
     });
 
     if (resp.status === 401) {
