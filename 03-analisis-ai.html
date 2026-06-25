@@ -231,7 +231,7 @@ async function runAnalysis() {
   document.getElementById('progressSteps').style.display = '';
   document.getElementById('errorPanel').style.display = 'none';
   document.getElementById('loadingTitle').textContent = 'Menganalisis biodata...';
-  document.getElementById('loadingDesc').textContent = 'Model Qwen sedang mengidentifikasi risiko dan menyusun pertanyaan verifikasi.';
+  document.getElementById('loadingDesc').textContent = 'Model LLM sedang mengidentifikasi risiko dan menyusun pertanyaan verifikasi.';
 
   const biodata = JSON.parse(localStorage.getItem('sv_biodata') || 'null');
   if (!biodata) {
