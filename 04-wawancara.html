@@ -48,6 +48,11 @@
     border-radius: var(--radius-lg);
     overflow: hidden;
     margin-bottom: 12px;
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.07) inset, 0 10px 28px rgba(0,0,0,0.28);
+    transition: box-shadow 0.35s ease;
+  }
+  .camera-wrap.is-recording {
+    box-shadow: 0 0 0 1px rgba(255,255,255,0.07) inset, 0 0 0 3px rgba(226,75,74,0.55), 0 0 28px rgba(226,75,74,0.4), 0 10px 28px rgba(0,0,0,0.28);
   }
   #cameraFeed {
     width: 100%; height: 100%;
@@ -55,12 +60,37 @@
     transform: scaleX(-1); /* mirror for selfie feel */
     display: block;
   }
+  /* subtle vignette for depth/contrast */
+  .cam-vignette {
+    position: absolute; inset: 0;
+    pointer-events: none;
+    background: radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.32) 100%);
+  }
+  /* viewfinder corner brackets — classic camera-app aesthetic */
+  .cam-corners { position: absolute; inset: 12px; pointer-events: none; }
+  .cam-corners .corner { position: absolute; width: 20px; height: 20px; border-color: rgba(255,255,255,0.65); border-style: solid; border-width: 0; }
+  .cam-corners .tl { top: 0; left: 0; border-top-width: 2.5px; border-left-width: 2.5px; border-radius: 6px 0 0 0; }
+  .cam-corners .tr { top: 0; right: 0; border-top-width: 2.5px; border-right-width: 2.5px; border-radius: 0 6px 0 0; }
+  .cam-corners .bl { bottom: 0; left: 0; border-bottom-width: 2.5px; border-left-width: 2.5px; border-radius: 0 0 0 6px; }
+  .cam-corners .br { bottom: 0; right: 0; border-bottom-width: 2.5px; border-right-width: 2.5px; border-radius: 0 0 6px 0; }
+  /* small live pill, top-right of viewfinder */
+  .cam-live-pill {
+    position: absolute; top: 12px; right: 12px;
+    display: flex; align-items: center; gap: 5px;
+    background: rgba(20,20,22,0.55);
+    backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: rgba(255,255,255,0.85);
+    font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+    padding: 4px 9px; border-radius: 20px;
+  }
+  .cam-live-pill .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c-success); box-shadow: 0 0 6px var(--c-success); }
   /* overlay question text on camera */
   .cam-overlay-q {
     position: absolute;
     bottom: 0; left: 0; right: 0;
-    background: linear-gradient(transparent, rgba(0,0,0,0.82));
-    padding: 24px 14px 14px;
+    background: linear-gradient(transparent, rgba(0,0,0,0.85) 55%);
+    padding: 28px 14px 14px;
     color: white;
     font-size: 14px;
     font-weight: 600;
@@ -77,29 +107,39 @@
     margin-bottom: 4px;
   }
 
-  /* camera status row */
+  /* camera status row — glass pill bar under viewfinder */
   .cam-status-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     margin-bottom: 10px;
     min-height: 26px;
+    padding: 2px 4px;
   }
+  .cam-ready-msg { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--c-text-muted); font-weight: 500; }
+  .cam-ready-msg .ready-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--c-success); box-shadow: 0 0 0 3px var(--c-success-light); }
 
   /* REC badge */
   .rec-badge {
-    display: inline-flex; align-items: center; gap: 5px;
-    background: var(--c-danger); color: white;
+    display: inline-flex; align-items: center; gap: 6px;
+    background: linear-gradient(135deg, #E8534F, #C03A39);
+    color: white;
     font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
-    padding: 3px 10px; border-radius: 20px;
+    padding: 4px 12px 4px 9px; border-radius: 20px;
+    box-shadow: 0 3px 10px rgba(226,75,74,0.4);
   }
-  .rec-dot { width: 7px; height: 7px; background: white; border-radius: 50%; animation: blink 1s ease-in-out infinite; }
-  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.15; } }
+  .rec-dot { width: 7px; height: 7px; background: white; border-radius: 50%; animation: recPulse 1.3s ease-in-out infinite; }
+  @keyframes recPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(255,255,255,0.55); }
+    70%  { box-shadow: 0 0 0 6px rgba(255,255,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(255,255,255,0); }
+  }
 
   /* duration counter */
   .rec-duration {
-    font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums;
-    color: var(--c-text-muted); letter-spacing: 0.04em;
+    font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums;
+    color: var(--c-text); letter-spacing: 0.04em;
+    background: var(--c-bg-tertiary); padding: 4px 10px; border-radius: 20px;
   }
 
   /* ── QUESTION PANEL ── */
@@ -164,6 +204,50 @@
   .alert-warning { background: var(--c-warning-light); color: #633806; border: 1px solid rgba(186,117,23,0.25); }
   .alert-info { background: var(--c-primary-light); color: #0C447C; border: 1px solid rgba(24,95,165,0.2); }
 
+  /* ── CONFIRMATION MODAL (shown after each answer is saved & verified) ── */
+  .modal-overlay {
+    position: absolute; inset: 0;
+    background: rgba(8,10,14,0.58);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 24px;
+    z-index: 500;
+    opacity: 0;
+    animation: modalFadeIn 0.22s ease forwards;
+  }
+  .modal-overlay.hidden { display: none; }
+  @keyframes modalFadeIn { to { opacity: 1; } }
+  .modal-box {
+    background: var(--c-bg);
+    border-radius: var(--radius-xl);
+    padding: 30px 24px 24px;
+    width: 100%; max-width: 320px;
+    text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.35);
+    transform: translateY(14px) scale(0.94);
+    opacity: 0;
+    animation: modalPop 0.35s cubic-bezier(.34,1.56,.64,1) forwards;
+    animation-delay: 0.05s;
+  }
+  @keyframes modalPop { to { transform: translateY(0) scale(1); opacity: 1; } }
+  .modal-icon-wrap {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: var(--c-success-light);
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+    animation: modalIconPop 0.5s cubic-bezier(.34,1.56,.64,1) 0.15s backwards;
+  }
+  @keyframes modalIconPop { from { transform: scale(0); } to { transform: scale(1); } }
+  .modal-icon-wrap svg { width: 28px; height: 28px; }
+  .modal-box h3 { font-size: 17px; font-weight: 700; margin-bottom: 8px; color: var(--c-text); }
+  .modal-box p { font-size: 13px; color: var(--c-text-muted); line-height: 1.55; margin-bottom: 16px; }
+  .modal-qinfo {
+    font-size: 11px; font-weight: 700; letter-spacing: 0.03em; color: var(--c-primary);
+    background: var(--c-primary-light); padding: 6px 14px; border-radius: 20px;
+    display: inline-block; margin-bottom: 20px;
+  }
+
   /* ── HIDDEN ── */
   .hidden { display: none !important; }
 
@@ -197,7 +281,7 @@
   <div class="logo-icon">AI</div>
   <div>
     <h1>Sistem Verifikasi Debitur</h1>
-    <p>Universitas Indonesia · Deteksi Kebohongan Berbasis LLM</p>
+    <p>Deteksi Kebohongan Berbasis AI</p>
   </div>
 </div>
 
@@ -232,8 +316,14 @@
 
     <!-- Camera viewfinder -->
     <div class="card" style="padding:12px;">
-      <div class="camera-wrap">
+      <div class="camera-wrap" id="cameraWrap">
         <video id="cameraFeed" autoplay playsinline muted></video>
+        <div class="cam-vignette"></div>
+        <div class="cam-corners">
+          <span class="corner tl"></span><span class="corner tr"></span>
+          <span class="corner bl"></span><span class="corner br"></span>
+        </div>
+        <div class="cam-live-pill"><span class="live-dot"></span>LIVE</div>
         <!-- Question overlay on top of camera feed -->
         <div class="cam-overlay-q" id="camOverlayQ">
           <div class="cam-q-label">Pertanyaan yang sedang dijawab</div>
@@ -246,7 +336,7 @@
           <div class="rec-dot"></div> REC
         </div>
         <div id="recDuration" class="rec-duration hidden">00:00</div>
-        <div id="camReadyMsg" style="font-size:12px; color:var(--c-text-muted);">Kamera aktif</div>
+        <div id="camReadyMsg" class="cam-ready-msg"><span class="ready-dot"></span>Kamera aktif</div>
       </div>
     </div>
 
@@ -321,6 +411,22 @@
 </div><!-- /main-content -->
 
     </div>
+
+    <!-- ══ CONFIRMATION MODAL — shown after each answer is saved & verified ══ -->
+    <div id="confirmModal" class="modal-overlay hidden">
+      <div class="modal-box">
+        <div class="modal-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20 6 9 17l-5-5"/>
+          </svg>
+        </div>
+        <h3 id="modalTitle">Jawaban Tersimpan</h3>
+        <p id="modalDesc">Jawaban Anda sudah tersimpan dan diverifikasi oleh sistem.</p>
+        <div class="modal-qinfo" id="modalQInfo"></div>
+        <button class="btn btn-primary btn-lg" style="width:100%;" id="modalContinueBtn" onclick="continueAfterConfirm()">Lanjutkan →</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -331,7 +437,7 @@
 // Ganti URL ini sesuai lokasi app.py Anda berjalan.
 // Jika dijalankan lokal: 'http://localhost:8000'
 // Jika di server: 'http://IP_SERVER:8000'
-const API_BASE = 'https://57s13rv1zkn23n-8000.proxy.runpod.net';
+const API_BASE = 'http://localhost:8000';
 
 // ─── API KEY (akses terbatas — hanya untuk pemakaian pribadi) ────────────────
 // Server menolak request tanpa header X-API-Key yang benar (lihat app.py).
@@ -660,6 +766,27 @@ async function onRecordingReady() {
   await analyzeAnswer(result);
 
   updateQNav();
+  showConfirmModal(result);
+}
+
+// ════════════════════════════════════════════════════════════════════════════
+//  CONFIRMATION MODAL — tampil setiap jawaban selesai disimpan & diverifikasi
+// ════════════════════════════════════════════════════════════════════════════
+function showConfirmModal(result) {
+  const idx   = result.questionIndex;
+  const total = state.questions.length;
+  const isLast = (idx + 1) >= total;
+
+  document.getElementById('modalTitle').textContent = 'Jawaban Tersimpan';
+  document.getElementById('modalDesc').textContent   = 'Jawaban Anda sudah tersimpan dan diverifikasi oleh sistem. Jika sudah siap, silakan lanjutkan.';
+  document.getElementById('modalQInfo').textContent  = `Pertanyaan ${idx + 1} dari ${total} selesai`;
+  document.getElementById('modalContinueBtn').textContent = isLast ? '✓ Lihat Laporan' : 'Lanjutkan →';
+
+  document.getElementById('confirmModal').classList.remove('hidden');
+}
+
+function continueAfterConfirm() {
+  document.getElementById('confirmModal').classList.add('hidden');
   proceedToNext();
 }
 
@@ -780,6 +907,7 @@ async function finishInterview() {
 let durationSecs = 0;
 
 function showCamRec() {
+  document.getElementById('cameraWrap').classList.add('is-recording');
   document.getElementById('recBadge').classList.remove('hidden');
   document.getElementById('recDuration').classList.remove('hidden');
   document.getElementById('camReadyMsg').classList.add('hidden');
@@ -788,6 +916,7 @@ function showCamRec() {
 }
 
 function hideCamStatus() {
+  document.getElementById('cameraWrap').classList.remove('is-recording');
   document.getElementById('recBadge').classList.add('hidden');
   document.getElementById('recDuration').classList.add('hidden');
   document.getElementById('camReadyMsg').classList.remove('hidden');
