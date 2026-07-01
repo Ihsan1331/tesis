@@ -353,7 +353,7 @@
       <div id="phasePrep" class="hidden">
         <div class="prepare-overlay">
           <div class="prepare-label">Pertanyaan berikutnya dimulai dalam</div>
-          <div class="prepare-num" id="prepareNum">5</div>
+          <div class="prepare-num" id="prepareNum">10</div>
           <div class="prepare-label" style="color:var(--c-primary); font-weight:500;">Baca dan siapkan jawaban Anda</div>
           <div class="prepare-question" id="previewQ"></div>
         </div>
@@ -568,7 +568,7 @@ function showPhase(name) {
   });
 }
 
-// ── PHASE 1: PREPARE (5-second countdown, question visible on screen + camera overlay) ──
+// ── PHASE 1: PREPARE (10-second countdown, question visible on screen + camera overlay) ──
 function showQuestion(idx) {
   if (idx >= state.questions.length) { finishInterview(); return; }
 
@@ -591,7 +591,7 @@ function showQuestion(idx) {
   showPhase('phasePrep');
   hideCamStatus();
 
-  let count = 5;
+  let count = 10;
   document.getElementById('prepareNum').textContent = count;
 
   state.prepareInterval = setInterval(() => {
