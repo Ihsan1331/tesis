@@ -202,6 +202,16 @@
     pointer-events: none;
   }
   .input-prefix-wrap input { padding-left: 38px; }
+  .currency-hint {
+    font-size: 11px;
+    color: var(--c-primary);
+    font-weight: 500;
+    margin-top: 3px;
+    min-height: 16px;
+    letter-spacing: 0.01em;
+  }
+  .currency-hint.empty { color: var(--c-text-muted); font-weight: 400; }
+
 
   /* BUTTONS */
   .btn {
@@ -870,15 +880,17 @@ body {
         <label>Pendapatan Bersih per Bulan (Rp) <span class="req">*</span></label>
         <div class="input-prefix-wrap">
           <span class="prefix">Rp</span>
-          <input type="number" id="f_pendapatan_bersih" placeholder="0" min="0" />
+          <input type="text" inputmode="numeric" id="f_pendapatan_bersih" placeholder="0" autocomplete="off" />
         </div>
+        <div class="currency-hint empty" id="hint_pendapatan_bersih">Ketik nominal tanpa titik/koma</div>
       </div>
       <div class="form-field">
         <label>Pendapatan Keluarga per Bulan (Rp) <span class="req">*</span></label>
         <div class="input-prefix-wrap">
           <span class="prefix">Rp</span>
-          <input type="number" id="f_pendapatan_keluarga" placeholder="0" min="0" />
+          <input type="text" inputmode="numeric" id="f_pendapatan_keluarga" placeholder="0" autocomplete="off" />
         </div>
+        <div class="currency-hint empty" id="hint_pendapatan_keluarga">Ketik nominal tanpa titik/koma</div>
       </div>
     </div>
 
@@ -945,8 +957,9 @@ body {
         <label>Nominal Pinjaman (Rp) <span class="req">*</span></label>
         <div class="input-prefix-wrap">
           <span class="prefix">Rp</span>
-          <input type="number" id="f_nominal" placeholder="0" min="0" />
+          <input type="text" inputmode="numeric" id="f_nominal" placeholder="0" autocomplete="off" />
         </div>
+        <div class="currency-hint empty" id="hint_nominal">Ketik nominal tanpa titik/koma</div>
       </div>
       <div class="form-field">
         <label>Tenor Pinjaman (Bulan) <span class="req">*</span></label>
@@ -1020,6 +1033,58 @@ body {
 </div>
 
 <script>
+// ─── FORMAT MATA UANG (Rp) ─────────────────────────────────────────────────
+function formatRupiah(angka) {
+  // Ubah angka menjadi string dengan titik sebagai pemisah ribuan: 5000000 -> "5.000.000"
+  return angka.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+}
+
+function parseCurrency(str) {
+  // Bersihkan titik pemisah ribuan, kembalikan string angka murni: "5.000.000" -> "5000000"
+  if (!str) return '';
+  return str.replace(/\./g, '').replace(/[^\d]/g, '');
+}
+
+function terbilangSingkat(angka) {
+  // Representasi singkat agar mudah dikonfirmasi: 5000000 -> "5 Juta"
+  if (angka >= 1_000_000_000) return (angka / 1_000_000_000).toFixed(1).replace(/\.0$/, '') + ' Miliar';
+  if (angka >= 1_000_000)     return (angka / 1_000_000).toFixed(1).replace(/\.0$/, '') + ' Juta';
+  if (angka >= 1_000)         return (angka / 1_000).toFixed(1).replace(/\.0$/, '') + ' Ribu';
+  return angka.toString();
+}
+
+function setupCurrencyField(fieldId) {
+  const input = document.getElementById(fieldId);
+  const hint  = document.getElementById('hint_' + fieldId.replace('f_', ''));
+  if (!input) return;
+
+  input.addEventListener('input', function () {
+    const raw = this.value.replace(/\./g, '').replace(/[^\d]/g, '');
+    if (!raw) {
+      this.value = '';
+      if (hint) { hint.textContent = 'Ketik nominal tanpa titik/koma'; hint.classList.add('empty'); }
+      return;
+    }
+    const num = parseInt(raw, 10);
+    // Format dengan titik ribuan saat user mengetik
+    const formatted = formatRupiah(num);
+    // Simpan posisi cursor agar tidak loncat ke akhir
+    const selStart = this.selectionStart;
+    const prevLen  = this.value.length;
+    this.value = formatted;
+    // Sesuaikan posisi cursor setelah penambahan titik
+    const diff = formatted.length - prevLen;
+    try { this.setSelectionRange(selStart + diff, selStart + diff); } catch(e) {}
+
+    if (hint) {
+      hint.textContent = 'Rp ' + formatted + ' (' + terbilangSingkat(num) + ')';
+      hint.classList.remove('empty');
+    }
+  });
+}
+
+['f_pendapatan_bersih', 'f_pendapatan_keluarga', 'f_nominal'].forEach(setupCurrencyField);
+
 // ─── FIELD DENGAN OPSI "LAINNYA" (industri, jabatan, alasan) ────────────────
 const OTHER_VALUE = '__other__';
 const OTHER_FIELD_KEYS = ['industri', 'jabatan', 'alasan'];
@@ -1083,10 +1148,10 @@ function collectBiodata() {
     industri: getOtherFieldValue('industri'),
     jabatan: getOtherFieldValue('jabatan'),
     lama_bekerja: document.getElementById('f_lama_bekerja').value,
-    pendapatan_bersih: document.getElementById('f_pendapatan_bersih').value,
-    pendapatan_keluarga: document.getElementById('f_pendapatan_keluarga').value,
+    pendapatan_bersih: parseCurrency(document.getElementById('f_pendapatan_bersih').value),
+    pendapatan_keluarga: parseCurrency(document.getElementById('f_pendapatan_keluarga').value),
     alasan: getOtherFieldValue('alasan'),
-    nominal: document.getElementById('f_nominal').value,
+    nominal: parseCurrency(document.getElementById('f_nominal').value),
     tenor: document.getElementById('f_tenor').value,
     bunga: document.getElementById('f_bunga').value,
     kontak_nama: document.getElementById('f_kontak_nama').value.trim(),
@@ -1143,7 +1208,20 @@ function goToDisclaimer() {
         return;
       }
       const el = document.getElementById('f_' + key);
-      if (el) el.value = val;
+      if (el) {
+        const CURRENCY_FIELDS = ['pendapatan_bersih', 'pendapatan_keluarga', 'nominal'];
+        if (CURRENCY_FIELDS.includes(key) && val) {
+          const num = parseInt(val, 10);
+          el.value = isNaN(num) ? val : formatRupiah(num);
+          const hint = document.getElementById('hint_' + key);
+          if (hint && !isNaN(num) && num > 0) {
+            hint.textContent = 'Rp ' + formatRupiah(num) + ' (' + terbilangSingkat(num) + ')';
+            hint.classList.remove('empty');
+          }
+        } else {
+          el.value = val;
+        }
+      }
     });
   } catch (e) {}
 })();
