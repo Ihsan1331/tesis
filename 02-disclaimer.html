@@ -281,6 +281,59 @@
     line-height: 1.5;
   }
 
+  /* TIMING ILLUSTRATION */
+  .timing-illustration {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 18px;
+    padding-top: 18px;
+    border-top: 1px dashed rgba(186,117,23,0.3);
+    flex-wrap: wrap;
+  }
+  .timing-step {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--c-bg);
+    border: 1px solid rgba(186,117,23,0.25);
+    border-radius: var(--radius-lg);
+    padding: 12px 16px;
+    flex: 1;
+    min-width: 200px;
+  }
+  .timing-icon {
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .timing-icon-read { background: var(--c-primary-light); color: var(--c-primary); }
+  .timing-icon-answer { background: var(--c-danger-light); color: var(--c-danger); }
+  .timing-text { display: flex; flex-direction: column; gap: 2px; }
+  .timing-value {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--c-text);
+    line-height: 1.2;
+  }
+  .timing-label {
+    font-size: 12px;
+    color: var(--c-text-muted);
+    line-height: 1.3;
+  }
+  .timing-arrow {
+    color: var(--c-warning);
+    flex-shrink: 0;
+    display: flex;
+  }
+  @media (max-width: 500px) {
+    .timing-illustration { flex-direction: column; }
+    .timing-arrow { transform: rotate(90deg); }
+    .timing-step { width: 100%; }
+  }
+
   .consent-row {
     display: flex;
     align-items: flex-start;
@@ -711,7 +764,7 @@ body {
   <div class="logo-icon">AI</div>
   <div>
     <h1>Sistem Verifikasi Debitur</h1>
-    <p>Universitas Indonesia · Deteksi Kebohongan Berbasis LLM</p>
+    <p>Wawancara Verifikasi Otomatis Berbasis AI</p>
   </div>
 </div>
 
@@ -748,20 +801,56 @@ body {
       <ol>
         <li>Jawaban anda terhadap pertanyaan tersebut akan <strong>direkam baik video maupun suara</strong>.</li>
         <li>Pertanyaan akan muncul di bagian bawah layar perangkat anda.</li>
-        <li>Anda diberikan waktu <strong>5 detik</strong> untuk memahami pertanyaan yang diberikan.</li>
+        <li>Anda diberikan waktu <strong>10 detik</strong> untuk memahami pertanyaan yang diberikan.</li>
         <li>Waktu anda menjawab dibatasi, paling lama adalah selama <strong>20 detik</strong>.</li>
         <li>Timer berada di atas tombol shutter.</li>
         <li>Jika sudah selesai menjawab namun waktu masih tersisa, anda dapat menekan tombol <strong>Stop</strong> untuk menghentikan perekaman.</li>
       </ol>
+
+      <div class="timing-illustration">
+        <div class="timing-step">
+          <div class="timing-icon timing-icon-read">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+              <circle cx="12" cy="12" r="3.2" stroke="currentColor" stroke-width="1.8"/>
+            </svg>
+          </div>
+          <div class="timing-text">
+            <div class="timing-value">10 detik</div>
+            <div class="timing-label">Membaca &amp; memahami pertanyaan</div>
+          </div>
+        </div>
+
+        <div class="timing-arrow">
+          <svg width="22" height="14" viewBox="0 0 22 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 7H20M20 7L14.5 1.5M20 7L14.5 12.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+
+        <div class="timing-step">
+          <div class="timing-icon timing-icon-answer">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="9" y="2" width="6" height="12" rx="3" stroke="currentColor" stroke-width="1.8"/>
+              <path d="M5 11C5 14.866 8.134 18 12 18C15.866 18 19 14.866 19 11" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M12 18V22" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              <path d="M8.5 22H15.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <div class="timing-text">
+            <div class="timing-value">20 detik</div>
+            <div class="timing-label">Merekam jawaban anda</div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="alert alert-info">
-      Sistem ini menggunakan kecerdasan buatan untuk menghasilkan pertanyaan wawancara yang adaptif berdasarkan profil anda, serta menganalisis indikator kejujuran dari respons yang diberikan.
+      Sistem ini menggunakan kecerdasan buatan untuk menghasilkan pertanyaan wawancara yang adaptif berdasarkan profil anda, serta menganalisis respons yang diberikan untuk mendukung proses verifikasi.
     </div>
 
     <div class="consent-row">
       <input type="checkbox" id="cbConsent1" />
-      <label for="cbConsent1">Saya memahami bahwa sesi wawancara ini akan direkam (video dan audio) untuk keperluan verifikasi dan penelitian.</label>
+      <label for="cbConsent1">Saya memahami bahwa sesi wawancara ini akan direkam (video dan audio) untuk keperluan verifikasi.</label>
     </div>
     <div class="consent-row">
       <input type="checkbox" id="cbConsent2" />
