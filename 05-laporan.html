@@ -711,7 +711,7 @@ body {
   <div class="logo-icon">AI</div>
   <div>
     <h1>Sistem Verifikasi Debitur</h1>
-    <p>Universitas Indonesia · Deteksi Kebohongan Berbasis LLM</p>
+    <p>Analisis Indikator Stres &amp; Beban Kognitif Respons</p>
   </div>
 </div>
 
@@ -743,6 +743,10 @@ body {
     <div class="card-title">Laporan Hasil Verifikasi</div>
     <div class="card-subtitle" id="reportSubtitle">Analisis selesai</div>
 
+    <div style="font-size:12px; line-height:1.6; color:var(--c-text-muted); background:var(--c-bg-secondary); border:0.5px solid var(--c-border); border-radius:var(--radius-md); padding:10px 12px; margin-bottom:16px;">
+      Sistem ini mendeteksi indikator stres dan beban kognitif (<em>cognitive load</em>) yang sering muncul saat seseorang merasa tidak nyaman atau tertekan. Indikator ini bukan bukti langsung ketidakjujuran, dan sebaiknya digunakan sebagai salah satu pertimbangan, bukan sebagai keputusan tunggal.
+    </div>
+
     <div id="verdictSummary" class="verdict-summary"></div>
 
     <div class="metric-grid">
@@ -752,24 +756,24 @@ body {
         <div class="metric-sub">pertanyaan dijawab</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">Terdeteksi Bohong</div>
+        <div class="metric-label">Beban Kognitif Tinggi</div>
         <div class="metric-value danger" id="mLie">—</div>
-        <div class="metric-sub">indikasi ketidakjujuran</div>
+        <div class="metric-sub">indikator stres terdeteksi</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">Jujur</div>
+        <div class="metric-label">Normal</div>
         <div class="metric-value success" id="mHonest">—</div>
-        <div class="metric-sub">respons terverifikasi</div>
+        <div class="metric-sub">respons konsisten</div>
       </div>
       <div class="metric-card">
-        <div class="metric-label">Persentase Kebohongan</div>
+        <div class="metric-label">Persentase Indikasi</div>
         <div class="metric-value warning" id="mPercent">—</div>
         <div class="metric-sub">dari total jawaban</div>
       </div>
     </div>
 
     <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--c-text-muted); margin-bottom:4px;">
-      <span>Persentase indikasi kebohongan</span>
+      <span>Persentase indikasi beban kognitif</span>
       <span id="barLabel">0%</span>
     </div>
     <div class="verdict-bar">
@@ -822,6 +826,10 @@ function formatRp(n) {
   return 'Rp ' + parseInt(n).toLocaleString('id-ID');
 }
 
+function verdictLabel(v) {
+  return v === 'JUJUR' ? 'Normal' : 'Beban Kognitif Tinggi';
+}
+
 function switchTab(id, btn) {
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -852,13 +860,13 @@ function generateReport() {
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
       <span style="font-size:28px;">${levelEmoji}</span>
       <div>
-        <div style="font-size:16px; font-weight:600;">${levelText} – ${pct}% Indikasi Kebohongan</div>
+        <div style="font-size:16px; font-weight:600;">${levelText} – ${pct}% Indikasi Beban Kognitif Tinggi</div>
         <div style="font-size:13px; opacity:0.8; margin-top:2px;">Berdasarkan ${total} pertanyaan wawancara adaptif</div>
       </div>
     </div>
     <div style="font-size:13px; line-height:1.6;">
-      ${lies} dari ${total} respons terdeteksi memiliki indikasi ketidakjujuran berdasarkan analisis latensi respons dan konteks biodata debitur.
-      ${pct >= 60 ? ' <strong>Direkomendasikan untuk ditolak atau dilakukan verifikasi lanjutan.</strong>' : pct >= 30 ? ' Perlu dilakukan verifikasi tambahan sebelum keputusan kredit.' : ' Profil debitur tampak konsisten dan dapat dipertimbangkan lebih lanjut.'}
+      ${lies} dari ${total} respons menunjukkan indikator stres/beban kognitif tinggi. Indikator ini bukan bukti langsung kebohongan.
+      ${pct >= 60 ? ' <strong>Direkomendasikan untuk dilakukan verifikasi lanjutan sebelum keputusan kredit.</strong>' : pct >= 30 ? ' Perlu dilakukan verifikasi tambahan sebelum keputusan kredit.' : ' Profil debitur tampak konsisten dan dapat dipertimbangkan lebih lanjut.'}
     </div>`;
 
   document.getElementById('reportSubtitle').textContent = `${biodata.nama} · ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}`;
@@ -880,7 +888,7 @@ function generateReport() {
       <td style="font-size:13px;">${r.q}</td>
       <td>
         <span class="badge badge-${r.verdict === 'JUJUR' ? 'honest' : 'lie'}">
-          ${r.verdict === 'JUJUR' ? '✓' : '✗'} ${r.verdict}
+          ${r.verdict === 'JUJUR' ? '✓' : '✗'} ${verdictLabel(r.verdict)}
         </span>
         <div style="font-size:11px; color:var(--c-text-muted); margin-top:4px;">${r.timedOut ? 'Timeout' : Math.round(r.latencyMs / 1000) + 's latency'}</div>
       </td>
